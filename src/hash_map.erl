@@ -12,16 +12,16 @@ calc_hash(Key, Array) ->
     erlang:phash2(Key, array:size(Array)).
 
 add_element(Key, Value, #map{storage = Array}) ->
-    Hash = calc_hash(Key, ?INIT_CAPACITY),
+    Hash = calc_hash(Key, Array),
     Branch = array:get(Hash, Array),
-    New_branch = dict:append(Key, Value, Branch),
-    #map{storage = array:set(Hash, New_branch, Array)}.
+    Newbranch = dict:append(Key, Value, Branch),
+    #map{storage = array:set(Hash, Newbranch, Array)}.
 
 delete_element(Key, #map{storage = Array}) ->
-    Hash = calc_hash(Key, ?INIT_CAPACITY),
+    Hash = calc_hash(Key, Array),
     Branch = array:get(Hash, Array),
-    New_branch = dict:erase(Key, Branch),
-    #map{storage = array:set(Hash, New_branch, Array)}.
+    Newbranch = dict:erase(Key, Branch),
+    #map{storage = array:set(Hash, Newbranch, Array)}.
 
 filter(Pred, Map) ->
     #map{storage = Array} = Map,
@@ -45,12 +45,25 @@ merge(Map1, Map2) ->
 
 get_value(Key, Map) ->
     #map{storage = Array} = Map,
-    Hash = calc_hash(Key, ?INIT_CAPACITY),
+    Hash = calc_hash(Key, Array),
     Branch = array:get(Hash, Array),
-    dict:get(Key, Branch).
+    {_, Val} = dict:find(Key, Branch),
+    Val.
 
 get_size(Map) ->
     fold(fun(_, _, Acc) -> Acc + 1 end, 0, Map).
+
+is_equal_dict(Acc, Map2, Dict) ->
+    dict:fold(fun(Key, Value, Accd) ->
+                 case get_value(Key, Map2) of
+                     Value ->
+                         Accd;
+                     _ ->
+                         false
+                 end
+              end,
+              Acc,
+              Dict).
 
 is_equal(Map1, Map2) ->
     #map{storage = Array1} = Map1,
@@ -58,17 +71,10 @@ is_equal(Map1, Map2) ->
     Size2 = get_size(Map2),
     case Size1 == Size2 of
         true ->
-            array:sparse_foldl(fun(_, {Key, Value}, Acc) ->
-                                  case get_value(Key, Map2) of
-                                      Value ->
-                                          Acc;
-                                      _ ->
-                                          false
-                                  end
-                               end,
+            array:sparse_foldl(fun(_, Dict, Acc) -> is_equal_dict(Acc, Map2, Dict) end,
                                true,
                                Array1);
-        false ->
+        _ ->
             false
     end.
 
@@ -76,7 +82,6 @@ is_map(#map{storage = Array}) ->
     array:is_array(Array);
 is_map(_) ->
     false.
-
 
 from_list(Map, []) ->
     Map;
