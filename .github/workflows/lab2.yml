@@ -2,6 +2,8 @@ name: Lab1
 
 on: push
 
+env:
+  ERL_AFLAGS: "-enable-feature all"
 jobs:
   build:
     runs-on: ubuntu-latest
