@@ -68,7 +68,7 @@ is_equal(Map1, Map2) ->
                                end,
                                true,
                                Array1);
-        fasle ->
+        false ->
             false
     end;
 is_equal(_, _) ->
@@ -79,7 +79,8 @@ is_map(#map{storage = Array}) ->
 is_map(_) ->
     false.
 
-from_list(Map, [{Key, Value} | Tail]) ->
-    from_list(add_element(Key, Value, Map), Tail);
+
 from_list(Map, []) ->
-    Map.
+    Map;
+from_list(Map, [{Key, Value} | Tail]) ->
+    from_list(add_element(Key, Value, Map), Tail).
