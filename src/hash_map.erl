@@ -70,9 +70,7 @@ is_equal(Map1, Map2) ->
                                Array1);
         false ->
             false
-    end;
-is_equal(_, _) ->
-    false.
+    end.
 
 is_map(#map{storage = Array}) ->
     array:is_array(Array);
