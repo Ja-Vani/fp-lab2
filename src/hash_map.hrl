@@ -1,3 +1,3 @@
 -record(map, {storage}).
 
--define(INIT_CAPACITY, 8).
+-define(INIT_CAPACITY, 32).

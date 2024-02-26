@@ -6,7 +6,7 @@
          is_equal/2, get_value/2, is_map/1, get_size/1, from_list/2]).
 
 new() ->
-    #map{storage = array:new(?INIT_CAPACITY, {default, dict:new()})}.
+    #map{storage = array:new(?INIT_CAPACITY, {default, maps:new()})}.
 
 calc_hash(Key, Array) ->
     erlang:phash2(Key, array:size(Array)).
@@ -14,31 +14,35 @@ calc_hash(Key, Array) ->
 add_element(Key, Value, #map{storage = Array}) ->
     Hash = calc_hash(Key, Array),
     Branch = array:get(Hash, Array),
-    Newbranch = dict:append(Key, Value, Branch),
+    Newbranch = maps:put(Key, Value, Branch),
     #map{storage = array:set(Hash, Newbranch, Array)}.
 
 delete_element(Key, #map{storage = Array}) ->
     Hash = calc_hash(Key, Array),
     Branch = array:get(Hash, Array),
-    Newbranch = dict:erase(Key, Branch),
+    Newbranch = maps:remove(Key, Branch),
     #map{storage = array:set(Hash, Newbranch, Array)}.
 
 filter(Pred, Map) ->
     #map{storage = Array} = Map,
-    #map{storage = array:sparse_map(fun(_, Elem) -> dict:filter(Pred, Elem) end, Array)}.
+    #map{storage = array:sparse_map(fun(_, Elem) -> maps:filter(Pred, Elem) end, Array)}.
 
 map(Func, Map) ->
     #map{storage = Array} = Map,
-    #map{storage = array:sparse_map(fun(_, Elem) -> dict:map(Func, Elem) end, Array)}.
+    #map{storage = array:sparse_map(fun(_, Elem) -> maps:map(Func, Elem) end, Array)}.
 
 fold(Func, InitAcc, Map) ->
     #map{storage = Array} = Map,
-    array:sparse_foldl(fun(_, Elem, Acc) -> dict:fold(Func, Acc, Elem) end, InitAcc, Array).
+    array:sparse_foldl(fun(_, Elem, Acc) -> maps:fold(Func, Acc, Elem) end, InitAcc, Array).
 
 merge(Map1, Map2) ->
     #map{storage = Array2} = Map2,
-    array:sparse_foldl(fun(_, {Key2, Value2}, Acc) ->
-                          add_element(Key2, Value2, delete_element(Key2, Acc))
+    array:sparse_foldl(fun(_, Dict, Acc) ->
+                          maps:fold(fun(Key2, Value2, Acc1) ->
+                                       add_element(Key2, Value2, delete_element(Key2, Acc1))
+                                    end,
+                                    Acc,
+                                    Dict)
                        end,
                        Map1,
                        Array2).
@@ -47,14 +51,19 @@ get_value(Key, Map) ->
     #map{storage = Array} = Map,
     Hash = calc_hash(Key, Array),
     Branch = array:get(Hash, Array),
-    {_, Val} = dict:find(Key, Branch),
-    Val.
+    Element = maps:find(Key, Branch),
+    case Element of
+        {_, Val} ->
+            Val;
+        Err ->
+            Err
+    end.
 
 get_size(Map) ->
     fold(fun(_, _, Acc) -> Acc + 1 end, 0, Map).
 
 is_equal_dict(Acc, Map2, Dict) ->
-    dict:fold(fun(Key, Value, Accd) ->
+    maps:fold(fun(Key, Value, Accd) ->
                  case get_value(Key, Map2) of
                      Value ->
                          Accd;
