@@ -17,7 +17,7 @@ get_property_test_result(Property) ->
 
 prop_insert_invariant() ->
     ?FORALL({L, {K, V}},
-            {list({string(), integer()}), {string(), integer()}},
+            {list({any(), any()}), {any(), any()}},
             ?IMPLIES(hash_map:get_value(K,
                                         hash_map:from_list(
                                             hash_map:new(), L))
@@ -32,7 +32,7 @@ prop_insert_invariant() ->
 
 prop_remove_invariant() ->
     ?FORALL({L, K},
-            {list({string(), integer()}), string()},
+            {list({string(), any()}), string()},
             ?IMPLIES(hash_map:get_value(K,
                                         hash_map:from_list(
                                             hash_map:new(), L))
@@ -50,7 +50,7 @@ prop_remove_invariant() ->
 
 prop_merge_associativity_invariant() ->
     ?FORALL({LeftList, MiddleList, RightList},
-            {list({string(), integer()}), list({string(), integer()}), list({string(), integer()})},
+            {list({any(), any()}), list({any(), any()}), list({any(), any()})},
             begin
                 Left =
                     hash_map:from_list(
@@ -70,7 +70,7 @@ prop_merge_associativity_invariant() ->
 
 prop_merge_neutral_elem_invariant() ->
     ?FORALL(L,
-            list({string(), integer()}),
+            list({any(), any()}),
             begin
                 EmptyMap = hash_map:new(),
                 Map = hash_map:from_list(
