@@ -48,9 +48,9 @@ delete_element_test() ->
 filter_elems_test() ->
     Map1 = add_thousand_elems(hash_map:new(), 0),
     Map2 =
-        hash_map:filter(fun(Key, Value) -> (Key == 1) or (Value == 999) or (Value == 501) end,
+        hash_map:filter(fun({Key, Value}) -> (Key == 1) or (Value == 999) or (Value == 501) end,
                         Map1),
-    Map3 = hash_map:filter(fun(Key, Value) -> (Key == -1) or (Value == 1000) end, Map1),
+    Map3 = hash_map:filter(fun({Key, Value}) -> (Key == -1) or (Value == 1000) end, Map1),
 
     ?assertEqual(3, hash_map:get_size(Map2)),
     ?assertEqual(0, hash_map:get_size(Map3)),
@@ -62,7 +62,7 @@ filter_elems_test() ->
 
 map_elems_test() ->
     Map1 = add_thousand_elems(hash_map:new(), 0),
-    Map2 = hash_map:map(fun(Key, Value) -> Value * 2 + Key end, Map1),
+    Map2 = hash_map:map(fun({Key, Value}) -> {Key, Value * 2 + Key} end, Map1),
 
     ?assertEqual(hash_map:get_size(Map2), 1000),
     ?assertEqual(3, hash_map:get_value(1, Map2)),
@@ -71,13 +71,13 @@ map_elems_test() ->
 
 fold_elems_test() ->
     Map1 = add_thousand_elems(hash_map:new(), 0),
-    Folded = hash_map:fold(fun(_, Value, Acc) -> Acc + Value end, 0, Map1),
+    Folded = hash_map:fold(fun({_, Value}, Acc) -> Acc + Value end, 0, Map1),
     ?assertEqual(499500, Folded).
 
 merge_test() ->
     Map = add_thousand_elems(hash_map:new(), 0),
-    Right = hash_map:map(fun(_, Value) -> Value * 2 end, Map),
-    Left = hash_map:filter(fun(_, Value) -> Value rem 2 == 0 end, Map),
+    Right = hash_map:map(fun({Key, Value}) -> {Key, Value * 2} end, Map),
+    Left = hash_map:filter(fun({_, Value}) -> Value rem 2 == 0 end, Map),
     Merged = hash_map:merge(Left, Right),
 
     ?assertEqual(1000, hash_map:get_size(Merged)),
@@ -86,11 +86,11 @@ merge_test() ->
 
 merge_associativity_test() ->
     Map1 = add_thousand_elems(hash_map:new(), 0),
-    Left1 = hash_map:filter(fun(Key, _) -> Key rem 2 == 0 end, Map1),
-    Map2 = hash_map:map(fun(_, Value) -> Value * 2 end, Map1),
+    Left1 = hash_map:filter(fun({Key, _}) -> Key rem 2 == 0 end, Map1),
+    Map2 = hash_map:map(fun({Key, Value}) -> {Key, Value * 2} end, Map1),
     %%  With shared key 2
-    Right = hash_map:filter(fun(Key, _) -> (Key rem 2 == 1) or (Key == 2) end, Map2),
-    Middle = hash_map:filter(fun(Key, _) -> Key rem 3 == 2 end, Map2),
+    Right = hash_map:filter(fun({Key, _}) -> (Key rem 2 == 1) or (Key == 2) end, Map2),
+    Middle = hash_map:filter(fun({Key, _}) -> Key rem 3 == 2 end, Map2),
     MergedLeft2Right = hash_map:merge(Left1, hash_map:merge(Middle, Right)),
     MergedRight2Left =
         hash_map:merge(
